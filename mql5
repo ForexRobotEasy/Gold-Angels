@@ -1,0 +1,92 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                                     Gold Angels |
+//|                                 http://www.forexroboteasy.com    |
+//|                                      Development: Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                        Global Variables                          |
+//+------------------------------------------------------------------+
+string symbol = 'XAUUSD';  // Symbol to trade
+int deviation = 40;       // Deviation from the band to trigger a trade
+
+//+------------------------------------------------------------------+
+//|                       Custom Indicator                           |
+//+------------------------------------------------------------------+
+int bandHandle;           // Handle for BAND indicator
+
+//+------------------------------------------------------------------+
+//|                       Expert Advisor                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   double upperBand = iBands(symbol, PERIOD_CURRENT, 20, 2, 0, PRICE_CLOSE, MODE_UPPER, 1);  // Get upper band value
+   double lowerBand = iBands(symbol, PERIOD_CURRENT, 20, 2, 0, PRICE_CLOSE, MODE_LOWER, 1);  // Get lower band value
+   double middleBand = iBands(symbol, PERIOD_CURRENT, 20, 2, 0, PRICE_CLOSE, MODE_MAIN, 1);  // Get middle band value
+   
+   double currentPrice = SymbolInfoDouble(symbol, SYMBOL_BID);  // Get current price
+   
+   if(currentPrice > upperBand + deviation || currentPrice < lowerBand - deviation)
+   {
+      // Price is significantly deviating from the band, potential trading opportunity
+      Print('Price deviating from band, waiting for price to return to the band...');
+   }
+   else if(currentPrice >= lowerBand && currentPrice <= upperBand)
+   {
+      // Price is within the band, enter the trade in the direction of the trend
+      int trend = iMA(symbol, PERIOD_CURRENT, 20, 0, MODE_EMA, PRICE_CLOSE, 1) > middleBand ? 1 : -1;  // Determine trend direction
+      if(trend == 1)
+      {
+         // Enter long trade
+         Print('Entering long trade at price ', currentPrice);
+         // Place your trade execution code here
+      }
+      else
+      {
+         // Enter short trade
+         Print('Entering short trade at price ', currentPrice);
+         // Place your trade execution code here
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                         Initialization                           |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   // Initialize custom indicator
+   bandHandle = iCustom(symbol, PERIOD_CURRENT, 'BAND', 20, 2, 0, PRICE_CLOSE);
+   
+   if(bandHandle == INVALID_HANDLE)
+   {
+      Print('Failed to initialize BAND indicator!');
+      return INIT_FAILED;
+   }
+   
+   return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+//|                        Deinitialization                          |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Cleanup
+   if(bandHandle != INVALID_HANDLE)
+      IndicatorRelease(bandHandle);
+}
+
+//+------------------------------------------------------------------+
+//|                        Execution                                 |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+   // Start monitoring for trade opportunities
+   while(!IsStopped())
+   {
+      OnTick();
+      Sleep(1000);  // Sleep for 1 second before checking again
+   }
+}
